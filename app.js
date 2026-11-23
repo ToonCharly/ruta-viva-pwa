@@ -319,6 +319,31 @@ function updateConnectionStatus() {
   if (!navigator.onLine) showToast("Estás trabajando sin conexión");
 }
 
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  if (hadController) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    }, { once: true });
+  }
+
+  navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+    .then((registration) => {
+      registration.update().catch((error) => {
+        console.warn("No se pudo comprobar si hay una actualización PWA.", error);
+      });
+    })
+    .catch((error) => {
+      console.error("No se pudo registrar el Service Worker.", error);
+      showToast("No se pudo activar el modo offline");
+    });
+}
+
 async function locateUser() {
   if (!navigator.geolocation) {
     showToast("Geolocalización no disponible");
@@ -472,16 +497,12 @@ window.addEventListener("offline", updateConnectionStatus);
 
 async function init() {
   db = await openDatabase();
+  registerServiceWorker();
   initMap();
   await renderSaved();
   state.places = seedPlaces;
   await fetchTourismPlaces();
   updateConnectionStatus();
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").catch(() => {
-      showToast("No se pudo activar el modo offline");
-    });
-  }
 }
 
 init();

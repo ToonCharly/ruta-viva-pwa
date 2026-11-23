@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#14532d" />
+    <meta name="description" content="Descubre lugares turísticos cercanos y guarda tus rutas." />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: blob: https://unpkg.com https://*.tile.openstreetmap.org https://images.unsplash.com; connect-src 'self' https://overpass-api.de https://www.openstreetmap.org https://nominatim.openstreetmap.org; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'" />
+    <title>Ruta Viva - Guía turística</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icons/icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#inicio" aria-label="Ir al inicio">
+        <span class="brand-mark" aria-hidden="true">RV</span>
+        <span>Ruta Viva</span>
+      </a>
+      <button id="installButton" class="button button-small" hidden>Instalar</button>
+    </header>
+
+    <main>
+      <section id="inicio" class="hero">
+        <div>
+          <p class="eyebrow">Explora. Guarda. Recorre.</p>
+          <h1>Tu próxima aventura está cerca</h1>
+          <p class="hero-copy">Encuentra sitios de interés, crea una ruta personal y consulta tus lugares aun sin conexión.</p>
+          <div class="hero-actions">
+            <button id="locateButton" class="button" type="button">Usar mi ubicación</button>
+            <a class="button button-secondary" href="#lugares">Ver lugares</a>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="compass">N</div>
+        </div>
+      </section>
+
+      <section class="search-section" aria-label="Buscar lugares">
+        <form id="searchForm" class="search-bar">
+          <label class="sr-only" for="searchInput">Buscar por nombre o categoría</label>
+          <input id="searchInput" type="search" placeholder="Buscar museo, parque, monumento..." />
+          <button class="button" type="submit">Buscar</button>
+        </form>
+      </section>
+
+      <section id="lugares" class="section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Recomendados</p>
+            <h2>Explora sitios</h2>
+          </div>
+          <span id="connectionStatus" class="status">Conectado</span>
+        </div>
+        <div id="placesGrid" class="places-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Tu colección</p>
+            <h2>Lugares guardados</h2>
+          </div>
+        </div>
+        <div id="savedGrid" class="places-grid"></div>
+      </section>
+
+      <section id="mapSection" class="section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Mapa interactivo</p>
+            <h2>Ubicaciones cercanas</h2>
+          </div>
+        </div>
+        <div id="map" role="application" aria-label="Mapa de lugares turísticos"></div>
+      </section>
+    </main>
+
+    <button id="addButton" class="fab" type="button" aria-label="Agregar lugar">+</button>
+
+    <dialog id="placeDialog">
+      <form id="placeForm" method="dialog">
+        <div class="dialog-heading">
+          <h2 id="dialogTitle">Agregar lugar</h2>
+          <button id="closeDialog" class="icon-button" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <input id="placeId" type="hidden" />
+        <label>Nombre
+          <input id="placeName" name="name" required maxlength="80" />
+        </label>
+        <label>Categoría
+          <select id="placeCategory" name="category" required>
+            <option value="Museo">Museo</option>
+            <option value="Monumento">Monumento</option>
+            <option value="Parque">Parque</option>
+            <option value="Naturaleza">Naturaleza</option>
+            <option value="Gastronomía">Gastronomía</option>
+          </select>
+        </label>
+        <label>Descripción
+          <textarea id="placeDescription" name="description" required maxlength="300"></textarea>
+        </label>
+        <label>URL de imagen
+          <input id="placeImage" name="image" type="url" placeholder="https://..." />
+        </label>
+        <label>Nota personal
+          <input id="placeNote" name="note" maxlength="120" />
+        </label>
+        <button class="button full-width" type="submit">Guardar lugar</button>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

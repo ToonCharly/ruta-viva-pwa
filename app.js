@@ -134,16 +134,95 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => toast.classList.remove("visible"), 2600);
 }
 
+function mapTourismElements(data) {
+  return data.elements
+    .filter((element) => element.tags?.name)
+    .map((element, index) => {
+      const latitude = element.lat || element.center?.lat;
+      const longitude = element.lon || element.center?.lon;
+      return {
+        id: `api-${element.type}-${element.id}`,
+        name: element.tags.name,
+        category: element.tags.tourism === "museum" ? "Museo" : "Monumento",
+        description: element.tags["description"]
+          || (element.tags["tourism"] === "viewpoint"
+            ? "Sitio turístico recomendado por OpenStreetMap."
+            : "Sitio de interés para visitar durante tu recorrido."),
+        image: seedPlaces[index % seedPlaces.length].image,
+        lat: latitude,
+        lon: longitude
+      };
+    })
+    .filter((place) => place.lat && place.lon);
+}
+
+async function requestTourismData(overpassQuery) {
+  const endpoints = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter"
+  ];
+  let lastError;
+
+  for (const endpoint of endpoints) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        },
+        body: new URLSearchParams({ data: overpassQuery }),
+        signal: controller.signal
+      });
+      if (!response.ok) {
+        lastError = new Error(`Overpass respondió ${response.status}`);
+        continue;
+      }
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  throw lastError || new Error("No hay servidores Overpass disponibles");
+}
+
+async function getCachedTourismData() {
+  if (!("caches" in window)) return null;
+  const cache = await caches.open("tourism-api");
+  const cacheKey = new URL("./api-cache/tourism.json", window.location.href).toString();
+  const cached = await cache.match(cacheKey);
+  return cached ? cached.json() : null;
+}
+
+async function cacheTourismData(data) {
+  if (!("caches" in window)) return;
+  try {
+    const cache = await caches.open("tourism-api");
+    const cacheKey = new URL("./api-cache/tourism.json", window.location.href).toString();
+    await cache.put(cacheKey, new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" }
+    }));
+  } catch (error) {
+    console.warn("No se pudo guardar la respuesta de lugares en caché.", error);
+  }
+}
+
 async function fetchTourismPlaces(query = "") {
   const grid = document.querySelector("#placesGrid");
   grid.innerHTML = '<div class="empty">Buscando lugares cercanos...</div>';
 
   const lat = state.userLocation?.lat || 19.4326;
   const lon = state.userLocation?.lon || -99.1332;
-  const radius = 30000;
+  const radius = 15000;
   const textFilter = query.trim() ? `[name~"${query.replace(/["\\]/g, "")}",i]` : "";
   const overpassQuery = `
-    [out:json][timeout:20];
+    [out:json][timeout:12];
     (
       nwr["tourism"="museum"]${textFilter}(around:${radius},${lat},${lon});
       nwr["tourism"="attraction"]${textFilter}(around:${radius},${lat},${lon});
@@ -153,45 +232,26 @@ async function fetchTourismPlaces(query = "") {
   `;
 
   try {
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: `data=${encodeURIComponent(overpassQuery)}`
-    });
-    if (!response.ok) throw new Error("API no disponible");
-    const data = await response.json();
-    if ("caches" in window) {
-      caches.open("tourism-api").then((cache) =>
-        cache.put("./api-cache/tourism.json", new Response(JSON.stringify(data), {
-          headers: { "Content-Type": "application/json" }
-        }))
-      );
-    }
-    const places = data.elements
-      .filter((element) => element.tags?.name)
-      .map((element, index) => {
-        const latitude = element.lat || element.center?.lat;
-        const longitude = element.lon || element.center?.lon;
-        return {
-          id: `api-${element.type}-${element.id}`,
-          name: element.tags.name,
-          category: element.tags.tourism === "museum" ? "Museo" : "Monumento",
-          description: element.tags["description"]
-            || (element.tags["tourism"] === "viewpoint"
-              ? "Sitio turístico recomendado por OpenStreetMap."
-              : "Sitio de interés para visitar durante tu recorrido."),
-          image: seedPlaces[index % seedPlaces.length].image,
-          lat: latitude,
-          lon: longitude
-        };
-      })
-      .filter((place) => place.lat && place.lon);
+    const data = await requestTourismData(overpassQuery);
+    await cacheTourismData(data);
+    const places = mapTourismElements(data);
     const visiblePlaces = places.length ? places : seedPlaces;
     state.places = visiblePlaces;
     renderPlaces(visiblePlaces);
   } catch (error) {
-    state.places = seedPlaces;
-    renderPlaces(seedPlaces);
-    showToast("Modo sin API: mostrando lugares de ejemplo");
+    let cachedPlaces = [];
+    try {
+      const cachedData = await getCachedTourismData();
+      cachedPlaces = cachedData ? mapTourismElements(cachedData) : [];
+    } catch (cacheError) {
+      console.warn("No se pudo leer la caché de lugares.", cacheError);
+    }
+    const fallbackPlaces = cachedPlaces.length ? cachedPlaces : seedPlaces;
+    state.places = fallbackPlaces;
+    renderPlaces(fallbackPlaces);
+    showToast(cachedPlaces.length
+      ? "API temporalmente no disponible; mostramos tus últimos lugares consultados"
+      : "Modo sin API: mostrando lugares de ejemplo");
   }
 }
 

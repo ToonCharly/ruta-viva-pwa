@@ -286,18 +286,30 @@ async function locateUser() {
   );
 }
 
+const installButton = document.querySelector("#installButton");
+const isInstalledApp = () =>
+  window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+installButton.hidden = isInstalledApp();
+
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
+  if (isInstalledApp()) return;
   deferredInstallPrompt = event;
-  document.querySelector("#installButton").hidden = false;
+  installButton.hidden = false;
 });
 
-document.querySelector("#installButton").addEventListener("click", async () => {
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  installButton.hidden = true;
+});
+
+installButton.addEventListener("click", async () => {
   if (!deferredInstallPrompt) return;
   deferredInstallPrompt.prompt();
   await deferredInstallPrompt.userChoice;
   deferredInstallPrompt = null;
-  document.querySelector("#installButton").hidden = true;
+  installButton.hidden = true;
 });
 
 document.querySelector("#locateButton").addEventListener("click", locateUser);

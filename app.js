@@ -80,6 +80,9 @@ function placeCard(place, saved = false) {
   const description = escapeHtml(place.description);
   const image = escapeHtml(place.image || "icons/icon-512.svg");
   const note = place.note ? `<p><strong>Nota:</strong> ${escapeHtml(place.note)}</p>` : "";
+  const source = place.sourceUrl
+    ? `<a class="source-link" href="${escapeHtml(place.sourceUrl)}" target="_blank" rel="noopener noreferrer">Fuente: Wikipedia</a>`
+    : "";
   const buttons = saved
     ? `<button class="small-action" data-edit="${id}" type="button">Editar</button>
        <button class="small-action" data-delete="${id}" type="button">Eliminar</button>
@@ -93,6 +96,7 @@ function placeCard(place, saved = false) {
       <span class="place-category">${category}</span>
       <h3>${name}</h3>
       <p>${description}</p>
+      ${source}
       ${note}
       <div class="place-actions">${buttons}</div>
     </div>
@@ -135,6 +139,7 @@ function showToast(message) {
 }
 
 function mapTourismElements(data) {
+  if (Array.isArray(data)) return data;
   return data.elements
     .filter((element) => element.tags?.name)
     .map((element, index) => {
@@ -192,6 +197,36 @@ async function requestTourismData(overpassQuery) {
   throw lastError || new Error("No hay servidores Overpass disponibles");
 }
 
+async function requestWikipediaPlaces(lat, lon, query) {
+  const parameters = new URLSearchParams({
+    action: "query",
+    list: "geosearch",
+    gscoord: `${lat}|${lon}`,
+    gsradius: "10000",
+    gslimit: "24",
+    format: "json",
+    origin: "*"
+  });
+  const response = await fetch(`https://es.wikipedia.org/w/api.php?${parameters}`);
+  if (!response.ok) throw new Error(`Wikipedia respondió ${response.status}`);
+  const data = await response.json();
+  const search = query.trim().toLocaleLowerCase();
+  return (data.query?.geosearch || [])
+    .filter((place) => !search || place.title.toLocaleLowerCase().includes(search))
+    .map((place, index) => ({
+      id: `wiki-${place.pageid}`,
+      name: place.title,
+      category: "Punto de interés",
+      description: `Lugar cercano a ${place.dist < 1000
+        ? `${Math.round(place.dist)} m`
+        : `${(place.dist / 1000).toFixed(1)} km`}.`,
+      image: seedPlaces[index % seedPlaces.length].image,
+      lat: place.lat,
+      lon: place.lon,
+      sourceUrl: `https://es.wikipedia.org/?curid=${encodeURIComponent(place.pageid)}`
+    }));
+}
+
 async function getCachedTourismData() {
   if (!("caches" in window)) return null;
   const cache = await caches.open("tourism-api");
@@ -239,19 +274,32 @@ async function fetchTourismPlaces(query = "") {
     state.places = visiblePlaces;
     renderPlaces(visiblePlaces);
   } catch (error) {
-    let cachedPlaces = [];
+    let fallbackPlaces = [];
     try {
-      const cachedData = await getCachedTourismData();
-      cachedPlaces = cachedData ? mapTourismElements(cachedData) : [];
-    } catch (cacheError) {
-      console.warn("No se pudo leer la caché de lugares.", cacheError);
+      fallbackPlaces = await requestWikipediaPlaces(lat, lon, query);
+      if (fallbackPlaces.length) {
+        await cacheTourismData(fallbackPlaces);
+        showToast("Overpass está saturado; mostramos lugares cercanos de Wikipedia");
+      }
+    } catch (wikipediaError) {
+      console.warn("No se pudo consultar la fuente turística de respaldo.", wikipediaError);
     }
-    const fallbackPlaces = cachedPlaces.length ? cachedPlaces : seedPlaces;
-    state.places = fallbackPlaces;
-    renderPlaces(fallbackPlaces);
-    showToast(cachedPlaces.length
-      ? "API temporalmente no disponible; mostramos tus últimos lugares consultados"
-      : "Modo sin API: mostrando lugares de ejemplo");
+    if (!fallbackPlaces.length) {
+      try {
+        const cachedData = await getCachedTourismData();
+        fallbackPlaces = cachedData ? mapTourismElements(cachedData) : [];
+      } catch (cacheError) {
+        console.warn("No se pudo leer la caché de lugares.", cacheError);
+      }
+    }
+    const visiblePlaces = fallbackPlaces.length ? fallbackPlaces : seedPlaces;
+    state.places = visiblePlaces;
+    renderPlaces(visiblePlaces);
+    if (!fallbackPlaces.length) {
+      showToast("APIs no disponibles; mostrando lugares de ejemplo");
+    } else if (fallbackPlaces.every((place) => place.sourceUrl === undefined)) {
+      showToast("API temporalmente no disponible; mostramos tus últimos lugares consultados");
+    }
   }
 }
 

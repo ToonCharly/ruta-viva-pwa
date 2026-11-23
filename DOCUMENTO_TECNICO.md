@@ -20,7 +20,7 @@ Las personas visitantes suelen depender de conexión móvil y consultan varias a
 El proyecto usa una arquitectura PWA de cliente:
 
 1. HTML, CSS y JavaScript forman la interfaz.
-2. Overpass/OpenStreetMap proporcionan información turística.
+2. Overpass/OpenStreetMap proporciona información turística; la búsqueda geográfica de Wikipedia sirve como fuente de respaldo si Overpass no está disponible.
 3. Leaflet representa el mapa y sus marcadores.
 4. IndexedDB almacena los lugares guardados.
 5. El Service Worker controla caché de la aplicación y mapas.
@@ -33,6 +33,7 @@ El proyecto usa una arquitectura PWA de cliente:
 - IndexedDB.
 - Leaflet y OpenStreetMap.
 - Overpass API.
+- Wikipedia GeoSearch API (respaldo y atribución a las páginas de origen).
 - APIs Geolocation y Web Share.
 
 ## Funcionalidades CRUD

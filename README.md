@@ -21,7 +21,7 @@ Abre `http://localhost:8080`.
 - Diseño responsivo.
 - Manifest y Service Worker con recursos offline.
 - Instalación como aplicación.
-- Consulta REST a la API de Overpass/OpenStreetMap.
+- Consulta REST a las API de Overpass/OpenStreetMap, con respaldo geográfico de Wikipedia cuando Overpass no responde.
 - Geolocalización y mapa con Leaflet/OpenStreetMap.
 - Compartir lugares mediante Web Share API o portapapeles.
 - CRUD de lugares mediante IndexedDB.

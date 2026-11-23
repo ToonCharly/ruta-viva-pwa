@@ -140,6 +140,7 @@ h1 { max-width: 720px; margin: 0; font-family: Georgia, serif; font-size: clamp(
 .place-category { color: #39744f; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
 .place-body h3 { margin: 6px 0 8px; font-family: Georgia, serif; }
 .place-body p { min-height: 44px; color: #647067; font-size: 0.92rem; line-height: 1.5; }
+.source-link { display: inline-block; margin: 0 0 10px; color: #39744f; font-size: 0.82rem; font-weight: 700; }
 .place-actions { display: flex; gap: 8px; margin-top: 12px; }
 .small-action {
   flex: 1;

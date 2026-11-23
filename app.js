@@ -171,7 +171,7 @@ async function requestTourismData(overpassQuery) {
 
   for (const endpoint of endpoints) {
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
     try {
       const response = await fetch(endpoint, {
         method: "POST",

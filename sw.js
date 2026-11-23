@@ -1,9 +1,9 @@
-const CACHE_NAME = "ruta-viva-v5";
+const CACHE_NAME = "ruta-viva-v6";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
-  "./app.js",
+  "./app.js?v=6",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"

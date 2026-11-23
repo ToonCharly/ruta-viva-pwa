@@ -1,5 +1,13 @@
 # Publicación HTTPS
 
+Publicado en GitHub Pages:
+
+https://tooncharly.github.io/ruta-viva-pwa/
+
+Repositorio:
+
+https://github.com/ToonCharly/ruta-viva-pwa
+
 El proyecto puede desplegarse en Netlify:
 
 1. Cree una cuenta en Netlify.

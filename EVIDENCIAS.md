@@ -16,8 +16,8 @@ Complete esta lista con capturas y enlaces antes de entregar:
 - [x] Lighthouse accesibilidad: 96.
 - [x] Lighthouse mejores prácticas: 96.
 - [x] Lighthouse SEO: 100.
-- [ ] Lighthouse PWA: esta versión de Lighthouse 13 retiró la categoría PWA separada. Validada mediante manifest, iconos, Service Worker y HTTP local.
-- [ ] Captura de escritorio.
+- [x] Manifest, iconos y Service Worker verificados; Lighthouse 13 retiró su categoría PWA independiente.
+- [x] Captura de escritorio.
 - [ ] Captura móvil.
-- [ ] Enlace público HTTPS.
-- [ ] Captura de escritorio: `evidencias/ruta-viva-desktop.png`.
+- [x] Enlace público HTTPS: https://tooncharly.github.io/ruta-viva-pwa/
+- [x] Captura de escritorio: `evidencias/ruta-viva-desktop.png`.

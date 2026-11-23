@@ -2,6 +2,10 @@
 
 PWA de guía turística interactiva desarrollada con HTML, CSS y JavaScript.
 
+## Sitio publicado
+
+https://tooncharly.github.io/ruta-viva-pwa/
+
 ## Ejecutar
 
 Publica el proyecto mediante un servidor HTTPS. Para una prueba local:
